@@ -1,4 +1,4 @@
-package com.felicedesign.todowidget.data
+package com.felicedesign.todowidget.util
 
 import com.felicedesign.todowidget.model.Priority
 import com.felicedesign.todowidget.model.Todo

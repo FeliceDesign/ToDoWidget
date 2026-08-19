@@ -20,6 +20,7 @@ import com.felicedesign.todowidget.model.StorageConfig
 import com.felicedesign.todowidget.model.StorageMode
 import com.felicedesign.todowidget.model.Todo
 import com.felicedesign.todowidget.model.TodoBoard
+import com.felicedesign.todowidget.util.TodoSorting
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
