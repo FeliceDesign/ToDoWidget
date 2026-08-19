@@ -61,10 +61,14 @@ fun TodoWidgetContent(board: TodoBoard, settings: Settings, now: LocalDateTime) 
     val size = LocalSize.current
     val showTime = size.width >= COMPACT_WIDTH
 
-    var surface = GlanceModifier.fillMaxSize().cornerRadius(16.dp)
-    // Alpha 0 means the user asked for a fully transparent widget, so we draw no background at all.
-    if (appearance.background ushr 24 != 0) {
-        surface = surface.background(Color(appearance.background))
+    // Alpha 0 means the user asked for a fully transparent widget. Rounding the corners has to go
+    // with the background: a corner radius needs something to clip, so on its own it is enough to
+    // put an opaque surface back underneath the list.
+    val transparent = (appearance.background ushr 24) == 0
+    val surface = if (transparent) {
+        GlanceModifier.fillMaxSize()
+    } else {
+        GlanceModifier.fillMaxSize().background(Color(appearance.background)).cornerRadius(16.dp)
     }
 
     Column(modifier = surface.padding(vertical = 6.dp)) {

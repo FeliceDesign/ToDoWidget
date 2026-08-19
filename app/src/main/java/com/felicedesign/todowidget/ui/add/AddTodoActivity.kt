@@ -32,7 +32,7 @@ class AddTodoActivity : ComponentActivity() {
 
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = Settings())
-            AppTheme(settings.appearance) {
+            AppTheme {
                 AddTodoSheet(
                     settings = settings,
                     onDismiss = ::finish,

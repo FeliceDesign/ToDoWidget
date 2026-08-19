@@ -32,7 +32,7 @@ class SettingsActivity : ComponentActivity() {
 
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = Settings())
-            AppTheme(settings.appearance) {
+            AppTheme {
                 SettingsScreen(
                     settings = settings,
                     onAppearanceChange = ::updateAppearance,
@@ -49,12 +49,14 @@ class SettingsActivity : ComponentActivity() {
 
     private fun updateAppearance(transform: (Appearance) -> Appearance) = inBackground {
         settingsRepository.updateAppearance(transform)
-        WidgetSync.refresh(applicationContext)
+        // Forced rather than a plain refresh: a colour change only alters attributes of views that
+        // are already on screen, which is exactly the case a host is happy to skip.
+        WidgetSync.forceRefresh(applicationContext)
     }
 
     private fun updateAutoHide(seconds: Int) = inBackground {
         settingsRepository.setAutoHideSeconds(seconds)
-        WidgetSync.refresh(applicationContext)
+        WidgetSync.forceRefresh(applicationContext)
     }
 
     private fun updateFileName(name: String) = inBackground {
@@ -96,7 +98,7 @@ class SettingsActivity : ComponentActivity() {
 
     private suspend fun migrateNow(config: StorageConfig) {
         todoRepository.migrateTo(config)
-        WidgetSync.refresh(applicationContext)
+        WidgetSync.forceRefresh(applicationContext)
     }
 
     /** Keeps access to the picked file or folder across reboots. */

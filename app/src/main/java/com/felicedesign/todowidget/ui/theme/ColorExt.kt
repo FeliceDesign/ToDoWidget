@@ -1,14 +1,10 @@
 package com.felicedesign.todowidget.ui.theme
 
-import androidx.compose.ui.graphics.Color
-
 /** Returns the same colour at a fraction of its current opacity. */
 fun Int.scaleAlpha(fraction: Float): Int {
     val alpha = ((this ushr 24) and 0xFF) * fraction.coerceIn(0f, 1f)
     return (alpha.toInt().coerceIn(0, 255) shl 24) or (this and 0x00FFFFFF)
 }
-
-fun Int.toComposeColor(): Color = Color(this)
 
 /** True when a colour is dark enough that white text sits comfortably on top. */
 fun Int.isDark(): Boolean {

@@ -19,10 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -122,7 +123,9 @@ fun AddTodoSheet(
                     ChoiceChip(
                         label = level.label(),
                         selected = priority == level,
-                        tint = Color(settings.appearance.colorFor(level)),
+                        // A dot in the configured colour, so the chip still says which colour this
+                        // level will get in the widget without tinting the chip itself.
+                        dot = Color(settings.appearance.colorFor(level)),
                     ) { priority = level }
                 }
             }
@@ -226,20 +229,20 @@ private fun SectionLabel(text: String) {
 private fun ChoiceChip(
     label: String,
     selected: Boolean,
-    tint: Color? = null,
+    dot: Color? = null,
     onClick: () -> Unit,
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(label) },
-        colors = if (tint == null) {
-            FilterChipDefaults.filterChipColors()
-        } else {
-            FilterChipDefaults.filterChipColors(
-                selectedContainerColor = tint.copy(alpha = 0.25f),
-                selectedLabelColor = tint,
-            )
+        label = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (dot != null) {
+                    Box(modifier = Modifier.size(10.dp).background(dot, CircleShape))
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(label)
+            }
         },
     )
 }
