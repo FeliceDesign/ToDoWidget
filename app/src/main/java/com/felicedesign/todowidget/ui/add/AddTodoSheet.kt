@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -86,10 +88,14 @@ fun AddTodoSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                // Order matters: the keyboard lifts the whole sheet, the surface still runs to the
+                // bottom edge, and only the content is inset above the navigation bar.
+                .imePadding()
                 .background(
                     MaterialTheme.colorScheme.surface,
                     RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                 )
+                .navigationBarsPadding()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,

@@ -6,6 +6,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.felicedesign.todowidget.data.markdown.TodoDocument
@@ -20,12 +22,16 @@ import com.felicedesign.todowidget.model.StorageConfig
 import com.felicedesign.todowidget.model.StorageMode
 import com.felicedesign.todowidget.model.Todo
 import com.felicedesign.todowidget.model.TodoBoard
+import com.felicedesign.todowidget.util.CompletionWindow
 import com.felicedesign.todowidget.util.TodoSorting
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -48,6 +54,34 @@ class TodoRepository(private val context: Context) {
     suspend fun board(now: LocalDateTime = LocalDateTime.now()): TodoBoard {
         val loaded = writeLock.withLock { load(settingsRepository.current()) }
         return buildBoard(loaded, now)
+    }
+
+    /**
+     * Emits a fresh board whenever anything it depends on changes.
+     *
+     * Both DataStores emit on every write, and [signalChanged] covers edits that only touch the
+     * Markdown file, so the widget can simply collect this instead of being handed a snapshot that
+     * goes stale the moment the user taps something.
+     */
+    fun boardFlow(): Flow<TodoBoard> =
+        combine(settingsRepository.settings, context.widgetStateDataStore.data) { _, _ -> Unit }
+            .map { board() }
+
+    /**
+     * Records why a widget tap failed, so the error banner can say so. A callback that throws is
+     * otherwise completely invisible: the widget simply does not change.
+     */
+    suspend fun setActionError(message: String?) {
+        // Clearing an error that is not there would still write, and every write redraws the widget.
+        if (message == null && !context.widgetStateDataStore.data.first().contains(LAST_ERROR)) return
+        context.widgetStateDataStore.edit { prefs ->
+            if (message == null) prefs.remove(LAST_ERROR) else prefs[LAST_ERROR] = message
+        }
+    }
+
+    /** Nudges [boardFlow] for a change the DataStores would not otherwise notice. */
+    suspend fun signalChanged() {
+        context.widgetStateDataStore.edit { it[GENERATION] = (it[GENERATION] ?: 0L) + 1L }
     }
 
     suspend fun add(
@@ -136,7 +170,8 @@ class TodoRepository(private val context: Context) {
     }
 
     private suspend fun buildBoard(loaded: Loaded, now: LocalDateTime): TodoBoard {
-        val completed = pruneCompletions(loaded.document.todos, loaded.settings.autoHideSeconds, now)
+        val widgetState = context.widgetStateDataStore.data.first()
+        val completed = liveCompletions(loaded.document.todos, loaded.settings.autoHideSeconds, now)
         val (done, open) = loaded.document.todos.partition { it.done }
         val stillVisible = done.filter { it.id in completed }
 
@@ -144,8 +179,8 @@ class TodoRepository(private val context: Context) {
             active = TodoSorting.active(open + stillVisible, now),
             archived = TodoSorting.archived(done - stillVisible.toSet()),
             completedAt = completed,
-            showArchive = context.widgetStateDataStore.data.first()[SHOW_ARCHIVE] ?: false,
-            error = loaded.error,
+            showArchive = widgetState[SHOW_ARCHIVE] ?: false,
+            error = loaded.error ?: widgetState[LAST_ERROR],
             storageLabel = loaded.label,
         )
     }
@@ -181,45 +216,34 @@ class TodoRepository(private val context: Context) {
 
     private suspend fun markCompletion(id: String, done: Boolean, now: LocalDateTime) {
         context.widgetStateDataStore.edit { prefs ->
-            val entries = prefs[COMPLETED_AT].orEmpty().filterNot { it.substringBefore(SEPARATOR) == id }
-            prefs[COMPLETED_AT] = if (done) {
-                entries.toSet() + "$id$SEPARATOR${now.toEpochMillis()}"
-            } else {
-                entries.toSet()
-            }
+            val remaining = CompletionWindow.without(prefs[COMPLETED_AT].orEmpty(), id)
+            prefs[COMPLETED_AT] =
+                if (done) remaining + CompletionWindow.encode(id, now.toEpochMillis()) else remaining
         }
     }
 
     private suspend fun forgetCompletion(id: String) {
         context.widgetStateDataStore.edit { prefs ->
-            prefs[COMPLETED_AT] = prefs[COMPLETED_AT].orEmpty()
-                .filterNot { it.substringBefore(SEPARATOR) == id }
-                .toSet()
+            prefs[COMPLETED_AT] = CompletionWindow.without(prefs[COMPLETED_AT].orEmpty(), id)
         }
     }
 
-    /** Drops window entries that have expired or whose task no longer exists. */
-    private suspend fun pruneCompletions(
+    /**
+     * The completions still inside their auto-hide window.
+     *
+     * Deliberately read-only: the widget observes this DataStore, so writing here would emit a
+     * change on every read and spin the composition. [markCompletion] and [forgetCompletion]
+     * already keep the stored set from growing.
+     */
+    private suspend fun liveCompletions(
         todos: List<Todo>,
         autoHideSeconds: Int,
         now: LocalDateTime,
-    ): Map<String, Long> {
-        val cutoff = now.toEpochMillis() - autoHideSeconds * 1_000L
-        val knownIds = todos.mapTo(mutableSetOf()) { it.id }
-        var live = emptyMap<String, Long>()
-
-        context.widgetStateDataStore.edit { prefs ->
-            live = prefs[COMPLETED_AT].orEmpty()
-                .mapNotNull { entry ->
-                    val id = entry.substringBefore(SEPARATOR)
-                    val at = entry.substringAfter(SEPARATOR, "").toLongOrNull() ?: return@mapNotNull null
-                    if (at > cutoff && id in knownIds) id to at else null
-                }
-                .toMap()
-            prefs[COMPLETED_AT] = live.map { (id, at) -> "$id$SEPARATOR$at" }.toSet()
-        }
-        return live
-    }
+    ): Map<String, Long> = CompletionWindow.live(
+        entries = context.widgetStateDataStore.data.first()[COMPLETED_AT].orEmpty(),
+        knownIds = todos.mapTo(mutableSetOf()) { it.id },
+        cutoffMillis = now.toEpochMillis() - autoHideSeconds * 1_000L,
+    )
 
     private companion object {
         /**
@@ -229,9 +253,10 @@ class TodoRepository(private val context: Context) {
         val writeLock = Mutex()
 
         const val MIRROR_FILE = "mirror.md"
-        const val SEPARATOR = "|"
         val COMPLETED_AT = stringSetPreferencesKey("completed_at")
         val SHOW_ARCHIVE = booleanPreferencesKey("show_archive")
+        val GENERATION = longPreferencesKey("generation")
+        val LAST_ERROR = stringPreferencesKey("last_action_error")
     }
 }
 

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
 import com.felicedesign.todowidget.TodoApp
 import com.felicedesign.todowidget.data.SettingsRepository
 import com.felicedesign.todowidget.data.TodoRepository
@@ -24,6 +25,9 @@ class AddTodoActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // The sheet draws edge to edge and pads itself, which is the only way it can clear both
+        // the navigation bar and the keyboard on a see-through window.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         val settingsRepository = SettingsRepository(this)
 
         setContent {

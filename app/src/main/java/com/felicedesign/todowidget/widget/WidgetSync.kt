@@ -14,10 +14,15 @@ object WidgetSync {
 
     suspend fun refresh(context: Context, board: TodoBoard? = null) {
         val app = context.applicationContext
+        val repository = TodoRepository(app)
         val settings = SettingsRepository(app).current()
-        val current = board ?: TodoRepository(app).board()
+        val current = board ?: repository.board()
 
         WidgetTickScheduler.schedule(app, current, settings)
+
+        // Nudges the flow a live widget is collecting…
+        repository.signalChanged()
+        // …and restarts the session for any widget that has none.
         TodoWidget.updateAll(app)
     }
 }
