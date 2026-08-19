@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ToDoWidget" parent="@android:style/Theme.Material.Light.NoActionBar" />
+    <!--
+      Dark on purpose: this theme is also the context the widget's remote views are inflated with,
+      so its background is what a transparent widget would otherwise fall back to.
+    -->
+    <style name="Theme.ToDoWidget" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorBackground">@color/app_background</item>
+        <item name="android:windowBackground">@color/app_background</item>
+    </style>
 
     <!--
       The add sheet floats over the launcher instead of looking like a separate app screen.

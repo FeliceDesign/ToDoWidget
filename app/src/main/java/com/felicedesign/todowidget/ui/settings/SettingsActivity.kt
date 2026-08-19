@@ -11,6 +11,7 @@ import com.felicedesign.todowidget.TodoApp
 import com.felicedesign.todowidget.data.SettingsRepository
 import com.felicedesign.todowidget.data.TodoRepository
 import com.felicedesign.todowidget.model.Appearance
+import com.felicedesign.todowidget.model.BarSide
 import com.felicedesign.todowidget.model.Settings
 import com.felicedesign.todowidget.model.StorageConfig
 import com.felicedesign.todowidget.model.StorageMode
@@ -37,6 +38,7 @@ class SettingsActivity : ComponentActivity() {
                     settings = settings,
                     onAppearanceChange = ::updateAppearance,
                     onAutoHideChange = ::updateAutoHide,
+                    onAddButtonSideChange = ::updateAddButtonSide,
                     onFileNameChange = ::updateFileName,
                     onUseInternalStorage = { migrate(StorageConfig()) },
                     onVaultPicked = ::useVaultFolder,
@@ -47,10 +49,22 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // A widget host that is off screen may defer updates, so push a final one exactly as the
+        // user returns to the home screen.
+        inBackground { WidgetSync.forceRefresh(applicationContext) }
+    }
+
     private fun updateAppearance(transform: (Appearance) -> Appearance) = inBackground {
         settingsRepository.updateAppearance(transform)
         // Forced rather than a plain refresh: a colour change only alters attributes of views that
         // are already on screen, which is exactly the case a host is happy to skip.
+        WidgetSync.forceRefresh(applicationContext)
+    }
+
+    private fun updateAddButtonSide(side: BarSide) = inBackground {
+        settingsRepository.setAddButtonSide(side)
         WidgetSync.forceRefresh(applicationContext)
     }
 

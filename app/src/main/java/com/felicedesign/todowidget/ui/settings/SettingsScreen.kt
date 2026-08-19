@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.felicedesign.todowidget.model.Appearance
+import com.felicedesign.todowidget.model.BarSide
 import com.felicedesign.todowidget.model.Settings
 import com.felicedesign.todowidget.model.StorageMode
 
@@ -88,6 +89,7 @@ fun SettingsScreen(
     settings: Settings,
     onAppearanceChange: ((Appearance) -> Appearance) -> Unit,
     onAutoHideChange: (Int) -> Unit,
+    onAddButtonSideChange: (BarSide) -> Unit,
     onFileNameChange: (String) -> Unit,
     onUseInternalStorage: () -> Unit,
     onVaultPicked: (Uri) -> Unit,
@@ -133,6 +135,24 @@ fun SettingsScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PRESETS.forEach { (name, appearance) ->
                 OutlinedButton(onClick = { onAppearanceChange { appearance } }) { Text(name) }
+            }
+        }
+
+        SectionHeader("Add button")
+        Text(
+            text = "Which edge the add button sits on. The other buttons line up beside it.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BarSide.entries.forEach { side ->
+                val label = if (side == BarSide.LEFT) "Left" else "Right"
+                if (settings.addButtonSide == side) {
+                    Button(onClick = { onAddButtonSideChange(side) }) { Text(label) }
+                } else {
+                    OutlinedButton(onClick = { onAddButtonSideChange(side) }) { Text(label) }
+                }
             }
         }
 

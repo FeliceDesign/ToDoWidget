@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.felicedesign.todowidget.model.Appearance
+import com.felicedesign.todowidget.model.BarSide
 import com.felicedesign.todowidget.model.Settings
 import com.felicedesign.todowidget.model.StorageConfig
 import com.felicedesign.todowidget.model.StorageMode
@@ -43,6 +44,10 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun setAddButtonSide(side: BarSide) {
+        context.settingsDataStore.edit { it[ADD_BUTTON_SIDE] = side.name }
+    }
+
     suspend fun setDefaultDurationMinutes(minutes: Long?) {
         context.settingsDataStore.edit { prefs ->
             if (minutes == null) prefs.remove(DEFAULT_DURATION) else prefs[DEFAULT_DURATION] = minutes
@@ -69,6 +74,9 @@ class SettingsRepository(private val context: Context) {
         ),
         autoHideSeconds = prefs[AUTO_HIDE] ?: Settings.DEFAULT_AUTO_HIDE_SECONDS,
         defaultDurationMinutes = prefs[DEFAULT_DURATION],
+        addButtonSide = prefs[ADD_BUTTON_SIDE]?.let { name ->
+            BarSide.entries.firstOrNull { it.name == name }
+        } ?: BarSide.RIGHT,
         storage = StorageConfig(
             mode = prefs[STORAGE_MODE]?.let { name ->
                 StorageMode.entries.firstOrNull { it.name == name }
@@ -88,6 +96,7 @@ class SettingsRepository(private val context: Context) {
         val LOW = intPreferencesKey("color_priority_low")
         val AUTO_HIDE = intPreferencesKey("auto_hide_seconds")
         val DEFAULT_DURATION = longPreferencesKey("default_duration_minutes")
+        val ADD_BUTTON_SIDE = stringPreferencesKey("add_button_side")
         val STORAGE_MODE = stringPreferencesKey("storage_mode")
         val DOCUMENT_URI = stringPreferencesKey("storage_document_uri")
         val TREE_URI = stringPreferencesKey("storage_tree_uri")

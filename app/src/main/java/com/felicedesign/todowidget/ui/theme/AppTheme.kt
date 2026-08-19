@@ -1,8 +1,10 @@
 package com.felicedesign.todowidget.ui.theme
 
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -31,5 +33,13 @@ private val NeutralScheme = darkColorScheme(
 
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = NeutralScheme, content = content)
+    MaterialTheme(colorScheme = NeutralScheme) {
+        // A colour scheme alone does not set the default content colour — only Surface and Scaffold
+        // do, and neither screen uses one. Without this, every Text that does not name a colour
+        // falls back to black, which is invisible on this background.
+        CompositionLocalProvider(
+            LocalContentColor provides NeutralScheme.onSurface,
+            content = content,
+        )
+    }
 }

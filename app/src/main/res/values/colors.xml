@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#1F6FEB</color>
+    <!-- Matches the neutral scheme the overlay screens use, and is what a widget falls back to. -->
+    <color name="app_background">#15171B</color>
 </resources>

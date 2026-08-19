@@ -34,6 +34,7 @@ import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.felicedesign.todowidget.model.Appearance
+import com.felicedesign.todowidget.model.BarSide
 import com.felicedesign.todowidget.model.Settings
 import com.felicedesign.todowidget.model.Todo
 import com.felicedesign.todowidget.model.TodoBoard
@@ -66,7 +67,9 @@ fun TodoWidgetContent(board: TodoBoard, settings: Settings, now: LocalDateTime) 
     // put an opaque surface back underneath the list.
     val transparent = (appearance.background ushr 24) == 0
     val surface = if (transparent) {
-        GlanceModifier.fillMaxSize()
+        // Explicitly transparent rather than simply unset: the widget is inflated with the app's
+        // own theme, so leaving the background alone lets that theme's colour show through.
+        GlanceModifier.fillMaxSize().background(Color.Transparent)
     } else {
         GlanceModifier.fillMaxSize().background(Color(appearance.background)).cornerRadius(16.dp)
     }
@@ -85,7 +88,7 @@ fun TodoWidgetContent(board: TodoBoard, settings: Settings, now: LocalDateTime) 
             }
         }
 
-        BottomBar(board, appearance)
+        BottomBar(board, settings)
     }
 }
 
@@ -209,53 +212,77 @@ private fun ErrorBanner(message: String, color: Int) {
 }
 
 @Composable
-private fun BottomBar(board: TodoBoard, appearance: Appearance) {
+private fun BottomBar(board: TodoBoard, settings: Settings) {
+    val appearance = settings.appearance
+    val onLeft = settings.addButtonSide == BarSide.LEFT
+
+    // Kept as one list so the two layouts stay mirror images: whichever button sits closest to the
+    // add button on one side sits closest to it on the other.
+    val secondary = buildList<@Composable () -> Unit> {
+        add {
+            BarButton(
+                icon = if (board.showArchive) WidgetIcons.BACK else WidgetIcons.ARCHIVE,
+                description = if (board.showArchive) "Back to open tasks" else "Show completed tasks",
+                tint = appearance.text.scaleAlpha(0.75f),
+                action = actionRunCallback<ToggleArchiveAction>(
+                    actionParametersOf(WidgetParams.showArchive to !board.showArchive),
+                ),
+            )
+        }
+        add {
+            BarButton(
+                icon = WidgetIcons.SETTINGS,
+                description = "Settings",
+                tint = appearance.text.scaleAlpha(0.75f),
+                action = actionStartActivity<SettingsActivity>(),
+            )
+        }
+        if (board.undoableId != null && !board.showArchive) {
+            add {
+                BarButton(
+                    icon = WidgetIcons.UNDO,
+                    description = "Undo",
+                    tint = appearance.highlight,
+                    action = actionRunCallback<UndoAction>(),
+                )
+            }
+        }
+    }
+
     Row(
         modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
-        BarButton(
-            icon = if (board.showArchive) WidgetIcons.BACK else WidgetIcons.ARCHIVE,
-            description = if (board.showArchive) "Back to open tasks" else "Show completed tasks",
-            tint = appearance.text.scaleAlpha(0.75f),
-            action = actionRunCallback<ToggleArchiveAction>(
-                actionParametersOf(WidgetParams.showArchive to !board.showArchive),
+        if (onLeft) {
+            AddButton(appearance)
+            secondary.asReversed().forEach { it() }
+            Spacer(GlanceModifier.defaultWeight())
+        } else {
+            Spacer(GlanceModifier.defaultWeight())
+            secondary.forEach { it() }
+            AddButton(appearance)
+        }
+    }
+}
+
+@Composable
+private fun AddButton(appearance: Appearance) {
+    Box(
+        modifier = GlanceModifier
+            .size(40.dp)
+            .cornerRadius(20.dp)
+            .background(Color(appearance.highlight))
+            .clickable(actionStartActivity<AddTodoActivity>()),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            provider = ImageProvider(WidgetIcons.ADD),
+            contentDescription = "Add a task",
+            colorFilter = ColorFilter.tint(
+                ColorProvider(if (appearance.highlight.isDark()) Color.White else Color.Black),
             ),
+            modifier = GlanceModifier.size(22.dp),
         )
-        BarButton(
-            icon = WidgetIcons.SETTINGS,
-            description = "Settings",
-            tint = appearance.text.scaleAlpha(0.75f),
-            action = actionStartActivity<SettingsActivity>(),
-        )
-        if (board.undoableId != null && !board.showArchive) {
-            BarButton(
-                icon = WidgetIcons.UNDO,
-                description = "Undo",
-                tint = appearance.highlight,
-                action = actionRunCallback<UndoAction>(),
-            )
-        }
-
-        Spacer(GlanceModifier.defaultWeight())
-
-        Box(
-            modifier = GlanceModifier
-                .size(40.dp)
-                .cornerRadius(20.dp)
-                .background(Color(appearance.highlight))
-                .clickable(actionStartActivity<AddTodoActivity>()),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                provider = ImageProvider(WidgetIcons.ADD),
-                contentDescription = "Add a task",
-                colorFilter = ColorFilter.tint(
-                    ColorProvider(if (appearance.highlight.isDark()) Color.White else Color.Black),
-                ),
-                modifier = GlanceModifier.size(22.dp),
-            )
-        }
     }
 }
 

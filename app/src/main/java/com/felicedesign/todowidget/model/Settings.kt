@@ -26,6 +26,9 @@ data class Appearance(
     }
 }
 
+/** Which edge the add button sits on; the smaller buttons line up next to it. */
+enum class BarSide { LEFT, RIGHT }
+
 enum class StorageMode { INTERNAL, DOCUMENT }
 
 /**
@@ -49,6 +52,7 @@ data class Settings(
     val autoHideSeconds: Int = DEFAULT_AUTO_HIDE_SECONDS,
     /** Pre-selected duration in the add sheet; null means "no deadline". */
     val defaultDurationMinutes: Long? = null,
+    val addButtonSide: BarSide = BarSide.RIGHT,
     val storage: StorageConfig = StorageConfig(),
 ) {
     companion object {
