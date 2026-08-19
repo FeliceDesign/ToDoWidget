@@ -2,6 +2,7 @@ package com.felicedesign.todowidget.data.storage
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -68,8 +69,23 @@ class SafDocumentStore(
         if (!tree.canRead()) throw StorageUnavailableException("Access to the selected folder was revoked")
         tree.findFile(fileName)?.let { return it }
         if (!createIfMissing) return null
-        return tree.createFile(MIME_MARKDOWN, fileName.removeSuffix(EXTENSION))
+
+        val created = tree.createFile(MIME_MARKDOWN, fileName.removeSuffix(EXTENSION))
             ?: throw StorageUnavailableException("Could not create $fileName in the selected folder")
+        return ensureMarkdownName(created)
+    }
+
+    /**
+     * Providers decide themselves whether to append an extension for `text/markdown`, and a note
+     * without `.md` is invisible to Obsidian. If the name came back wrong, rename it.
+     */
+    private fun ensureMarkdownName(file: DocumentFile): DocumentFile {
+        val name = file.name
+        if (name != null && name.endsWith(EXTENSION, ignoreCase = true)) return file
+        val renamed = runCatching {
+            DocumentsContract.renameDocument(context.contentResolver, file.uri, fileName)
+        }.getOrNull()
+        return renamed?.let { DocumentFile.fromSingleUri(context, it) } ?: file
     }
 
     private companion object {

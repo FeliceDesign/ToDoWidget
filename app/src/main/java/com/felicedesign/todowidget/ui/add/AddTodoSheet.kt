@@ -107,7 +107,10 @@ fun AddTodoSheet(
             )
 
             SectionLabel("Priority")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+            ) {
                 ChoiceChip("None", priority == null) { priority = null }
                 Priority.entries.forEach { level ->
                     ChoiceChip(
