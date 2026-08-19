@@ -43,7 +43,6 @@ class TodoRepository(private val context: Context) {
 
     private val settingsRepository = SettingsRepository(context)
     private val mirror = File(context.filesDir, MIRROR_FILE)
-    private val writeLock = Mutex()
 
     suspend fun board(now: LocalDateTime = LocalDateTime.now()): TodoBoard {
         val loaded = writeLock.withLock { load(settingsRepository.current()) }
@@ -222,6 +221,12 @@ class TodoRepository(private val context: Context) {
     }
 
     private companion object {
+        /**
+         * Shared across instances on purpose: a widget tap, the add sheet and the settings screen
+         * each build their own repository, and two of them writing at once would lose an edit.
+         */
+        val writeLock = Mutex()
+
         const val MIRROR_FILE = "mirror.md"
         const val SEPARATOR = "|"
         val COMPLETED_AT = stringSetPreferencesKey("completed_at")
