@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ToDoWidget</string>
+    <string name="widget_label">To-Do List</string>
+    <string name="widget_description">A resizable to-do list you can use without opening the app.</string>
+</resources>
