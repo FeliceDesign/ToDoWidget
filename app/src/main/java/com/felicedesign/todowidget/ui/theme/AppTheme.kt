@@ -10,10 +10,13 @@ import androidx.compose.ui.graphics.Color
 /**
  * A fixed, neutral palette for the two overlay screens.
  *
- * They deliberately do *not* follow the user's widget colours. Those colours are chosen to sit on a
- * wallpaper, and applying them here produced unreadable combinations — a black-on-black settings
- * screen the moment someone picked a dark background or a transparent one. Only the widget changes;
- * the screens that configure it stay legible no matter what is set.
+ * Surfaces and text deliberately do *not* follow the user's widget colours: those are chosen to sit
+ * on a wallpaper, and applying them here produced unreadable combinations — a black-on-black
+ * settings screen the moment someone picked a dark or transparent background.
+ *
+ * The accent is the exception. It only ever tints buttons and the text cursor, which stay legible
+ * whatever it is, so passing [accentArgb] lets the add sheet show the highlight colour that is
+ * actually configured instead of a stock blue.
  */
 private val NeutralScheme = darkColorScheme(
     primary = Color(0xFF4C8DF6),
@@ -32,13 +35,22 @@ private val NeutralScheme = darkColorScheme(
 )
 
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = NeutralScheme) {
+fun AppTheme(accentArgb: Int? = null, content: @Composable () -> Unit) {
+    val scheme = if (accentArgb == null) {
+        NeutralScheme
+    } else {
+        NeutralScheme.copy(
+            primary = Color(accentArgb),
+            onPrimary = if (accentArgb.isDark()) Color.White else Color.Black,
+        )
+    }
+
+    MaterialTheme(colorScheme = scheme) {
         // A colour scheme alone does not set the default content colour — only Surface and Scaffold
         // do, and neither screen uses one. Without this, every Text that does not name a colour
         // falls back to black, which is invisible on this background.
         CompositionLocalProvider(
-            LocalContentColor provides NeutralScheme.onSurface,
+            LocalContentColor provides scheme.onSurface,
             content = content,
         )
     }

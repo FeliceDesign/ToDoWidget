@@ -74,21 +74,27 @@ fun TodoWidgetContent(board: TodoBoard, settings: Settings, now: LocalDateTime) 
         GlanceModifier.fillMaxSize().background(Color(appearance.background)).cornerRadius(16.dp)
     }
 
-    Column(modifier = surface.padding(vertical = 6.dp)) {
-        board.error?.let { ErrorBanner(it, appearance.highPriority) }
+    // The coloured surface is deliberately a child rather than the root. A recomposition reliably
+    // reapplies attributes on nested views — the add button's colour always followed the setting —
+    // while the root container's background did not, so a new background only appeared on the next
+    // full rebuild.
+    Box(modifier = GlanceModifier.fillMaxSize()) {
+        Column(modifier = surface.padding(vertical = 6.dp)) {
+            board.error?.let { ErrorBanner(it, appearance.highPriority) }
 
-        val items = board.visible
-        if (items.isEmpty()) {
-            EmptyState(board.showArchive, appearance.text, GlanceModifier.defaultWeight())
-        } else {
-            LazyColumn(modifier = GlanceModifier.defaultWeight()) {
-                items(items, itemId = { it.id.hashCode().toLong() }) { todo ->
-                    TodoRow(todo, board, settings, now, showTime)
+            val items = board.visible
+            if (items.isEmpty()) {
+                EmptyState(board.showArchive, appearance.text, GlanceModifier.defaultWeight())
+            } else {
+                LazyColumn(modifier = GlanceModifier.defaultWeight()) {
+                    items(items, itemId = { it.id.hashCode().toLong() }) { todo ->
+                        TodoRow(todo, board, settings, now, showTime)
+                    }
                 }
             }
-        }
 
-        BottomBar(board, settings)
+            BottomBar(board, settings)
+        }
     }
 }
 
