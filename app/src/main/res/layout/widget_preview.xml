@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown in the widget picker on Android 12+. Static by design: it only has to look like
+     the real widget, so it uses plain shapes rather than any live data. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/preview_surface"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="5dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_checkbox_unchecked"
+            android:tint="#FFF75A5A" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/preview_pill" />
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/preview_pill" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="5dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_checkbox_unchecked"
+            android:tint="#FFE3B341" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/preview_pill" />
+
+        <View
+            android:layout_width="14dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/preview_pill" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="5dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_checkbox_checked"
+            android:tint="#FF3B82F6" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:alpha="0.45"
+            android:background="@drawable/preview_pill" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_archive"
+            android:tint="#BFE8EDF2" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_settings"
+            android:tint="#BFE8EDF2" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/preview_cta">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_add"
+                android:tint="#FFFFFFFF" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>
